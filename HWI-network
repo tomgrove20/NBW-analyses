@@ -1,0 +1,70 @@
+# Install asnipe
+install.packages("asnipe")
+install.packages("igraph")
+install.packages("GGally")
+install.packages("RColorBrewer")
+install.packages("intergraph")
+install.packages("network")
+install.packages("sna")
+
+# Load asnipe
+library(asnipe)
+library(igraph)
+library(network)
+library(sna)
+library(ggplot2)
+library(RColorBrewer)
+library(intergraph)
+library(GGally)
+
+# Upload data
+GBI.csv <- read.csv(file.choose())
+head(GBI.csv)
+
+# Get rid of row and column headings
+colnames(GBI.csv) <- NULL
+GBI.csv2 <- GBI.csv[, -1]
+
+# Convert to matrix
+GBI.matrix <- as.matrix(GBI.csv2)
+
+# Calculate network calculated by HWI associations
+HWInetwork <- get_network(GBI.matrix, data_format="GBI", association_index="HWI")
+
+# Visualise this
+View(HWInetwork)
+
+# Add row and column names. Remember to change this for each dataset (different individuals)
+rownames(HWInetwork) <- c("001",	"002",	"003",	"004",	"005",	"006",	"007",	"008",	"009",	"010",	"011",	"012",	"013",	"014",	"015",	"016",	"017",	"018",	"019")
+colnames(HWInetwork) <- c("001",	"002",	"003",	"004",	"005",	"006",	"007",	"008",	"009",	"010",	"011",	"012",	"013",	"014",	"015",	"016",	"017",	"018",	"019")
+
+#Check this
+View(HWInetwork)
+
+#Export as csv. Make sure to check your terminal for file destination
+write.csv(HWInetwork, file= "NBW_associations_HWI.csv")
+
+# Network visualisation. See http://pablobarbera.com/big-data-upf/html/02a-networks-intro-visualization.html for more details
+# First, we need to define our data frame as an igraph object
+net <- graph.adjacency(HWInetwork, mode="undirected", diag=FALSE, weighted=TRUE)
+deg_weighted <- graph.strength(net)
+detach(package:igraph)
+
+# Let's have a look at a sample version of our social network
+plot(net)
+
+# Now let's add some more detail
+# Let line width = association strength * 5
+igraph::E(net)$width <- igraph::E(net)$weight*2
+igraph::edge_attr(net)
+plot(net)
+
+# Notice how, in this example, there isn't much difference in line widths. Perhaps there are better ways of representing our data. We can see when we have a complete dataset
+# Obviously this example violates the assumptions of HWI. More observations needed!
+
+# We can try to make this figure look prettier, using ggplot2. First, let's define it as an object compatible with ggplot2
+# Then we can play about with aesthetics. https://briatte.github.io/ggnet/ 
+# To see colour guide for ggplot2: http://sape.inf.usi.ch/quick-reference/ggplot2/colour
+
+ggnet2(net, label = TRUE, label.size = 3, node.size = 10, node.color = "tomato", edge.size = "width", edge.color = "steelblue") +
+  theme(panel.background = element_rect(fill = "darkseagreen1"))
